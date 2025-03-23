@@ -29,8 +29,17 @@ download_and_set_permissions() {
     log "[INFO] Downloading $(basename "$dest_file")..."
     curl -s -L -o "$dest_file" "$url" || { log "[ERROR] Failed to download $(basename "$dest_file")"; exit 1; }
     chmod 755 "$dest_file"
-    log "[SUCCESS] $(basename "$dest_file") ready."
+    echo "[SUCCESS] $(basename "$dest_file") ready."
 }
+
+# Function to download files without setting permissions
+download_file() {
+    local url=$1 dest_file=$2
+    #echo "[INFO] Downloading $(basename "$dest_file")..."
+    curl -s -L -o "$dest_file" "$url" || { log "[ERROR] Failed to download $(basename "$dest_file")"; exit 1; }
+    echo "[SUCCESS] $(basename "$dest_file") downloaded."
+}
+
 
 # Download required binaries
 download_and_set_permissions "$URL_BUSYBOX" "$BIN_DIR/busybox"
@@ -52,7 +61,7 @@ if [ -d "$WORK_DIR" ]; then
                 1)
                     log "[INFO] Deleting existing files..."
                     $BIN_DIR/busybox rm -rf "$WORK_DIR"/*
-                    log "[SUCCESS] Old files deleted."
+                    echo "[SUCCESS] Old files deleted."
                     break
                     ;;
                 2)
@@ -61,7 +70,7 @@ if [ -d "$WORK_DIR" ]; then
                     log "[INFO] Moving old files to $BACKUP_DIR..."
                     $BIN_DIR/busybox mkdir -p "$BACKUP_DIR"
                     $BIN_DIR/busybox mv "$WORK_DIR"/* "$BACKUP_DIR"/
-                    log "[SUCCESS] Files moved to $BACKUP_DIR."
+                    echo "[SUCCESS] Files moved to $BACKUP_DIR."
                     break
                     ;;
                 3)
@@ -173,7 +182,7 @@ for img in system vendor odm system_ext product; do
     $BIN_DIR/busybox mv "$TARGET_DIR/${img}.img" "$TARGET_DIR/${img}_a.img"
 done
 $BIN_DIR/busybox sha256sum "$TARGET_DIR/system_a.img" "$TARGET_DIR/vendor_a.img" "$TARGET_DIR/odm_a.img" "$TARGET_DIR/system_ext_a.img" "$TARGET_DIR/product_a.img" > "$TARGET_DIR/original_checksums.txt"
-log "[SUCCESS] Checksums generated."
+echo "[SUCCESS] Checksums generated."
 
 log "[INFO] Calculating total partition size with buffer..."
 TOTAL_SIZE=$($BIN_DIR/busybox du -b "$TARGET_DIR/system_a.img" "$TARGET_DIR/vendor_a.img" "$TARGET_DIR/odm_a.img" "$TARGET_DIR/system_ext_a.img" "$TARGET_DIR/product_a.img" | $BIN_DIR/busybox awk '{sum += $1} END {print sum + (24 * 1024 * 1024); exit}')
@@ -205,16 +214,20 @@ log "[SUCCESS] super.img created."
 
 log "[INFO] Truncating super.img..."
 $BIN_DIR/busybox truncate -s "$TOTAL_SIZE" "$TARGET_DIR/super.img"
-log "[SUCCESS] Truncation complete."
+echo "[SUCCESS] Truncation complete."
+
+log "[INFO] Cleaning up payload.bin extrated img's..."
+$BIN_DIR/busybox rm -f "$TARGET_DIR/system_a.img" "$TARGET_DIR/vendor_a.img" "$TARGET_DIR/odm_a.img" "$TARGET_DIR/system_ext_a.img" "$TARGET_DIR/product_a.img" "$PAYLOAD_FILE" 
+echo "[SUCCESS] Cleanup complete."
 
 log "[INFO] Extracting super.img..."
 $BIN_DIR/busybox mkdir -p "$TARGET_DIR/super_extracted"
 $BIN_DIR/lpunpack "$TARGET_DIR/super.img" "$TARGET_DIR/super_extracted" || { log "[ERROR] Extraction failed!"; exit 1; }
-log "[SUCCESS] super.img extracted."
+echo "[SUCCESS] super.img extracted."
 
 log "[INFO] Generating new checksums..."
 $BIN_DIR/busybox sha256sum "$TARGET_DIR/super_extracted/system_a.img" "$TARGET_DIR/super_extracted/vendor_a.img" "$TARGET_DIR/super_extracted/odm_a.img" "$TARGET_DIR/super_extracted/system_ext_a.img" "$TARGET_DIR/super_extracted/product_a.img" > "$TARGET_DIR/new_checksums.txt"
-log "[SUCCESS] Checksums generated."
+echo "[SUCCESS] Checksums generated."
 
 log "[INFO] Normalizing checksums for comparison..."
 $BIN_DIR/busybox sed -E "s|(_a)?\.img|.img|" "$TARGET_DIR/original_checksums.txt" | $BIN_DIR/busybox sed -E "s|$TARGET_DIR|/tmp|" > "$TARGET_DIR/original_checksums_norm.txt"
@@ -222,11 +235,17 @@ $BIN_DIR/busybox sed -E "s|(_a)?\.img|.img|" "$TARGET_DIR/new_checksums.txt" | $
 
 log "[INFO] Comparing checksums..."
 $BIN_DIR/busybox diff "$TARGET_DIR/original_checksums_norm.txt" "$TARGET_DIR/new_checksums_norm.txt" || log "[WARNING] Checksum mismatch detected!"
-log "[SUCCESS] Checksum comparison complete."
+echo "[SUCCESS] Checksum comparison complete."
 
 log "[COMPLETED] super.img prepared to use in fastboot/recovery!"
 
-log "[INFO] Now will contrust folder/files as required for auto-installer!"
+log "[INFO] Cleaning up..."
+$BIN_DIR/busybox rm -rf "$TARGET_DIR/super_extracted"
+$BIN_DIR/busybox rm -f "$TARGET_DIR/original_checksums.txt" "$TARGET_DIR/new_checksums.txt" "$TARGET_DIR/original_checksums_norm.txt" "$TARGET_DIR/new_checksums_norm.txt" 
+echo "[SUCCESS] Cleanup complete."
+
+log "[INFO] Now will contrust folder/files and Download Scripts as required for auto-installer!\n[NOTE] Scripts downlaod with Derfest OS (ASCII/name) only (Will add other soon)\n"
+
 $BIN_DIR/busybox mkdir -p "$TARGET_DIR/images" 
 $BIN_DIR/busybox mkdir -p "$TARGET_DIR/META-INF/com/google/android" 
 $BIN_DIR/busybox mkdir -p "$TARGET_DIR/META-INF/com/arkt" 
@@ -238,11 +257,19 @@ for img in boot dtbo vendor_boot vbmeta vbmeta_system super; do
     $BIN_DIR/busybox mv "$TARGET_DIR/${img}.img" "$TARGET_DIR/images/${img}.img"
 done
 
-log "[INFO] Cleaning up..."
-$BIN_DIR/busybox rm -rf "$TARGET_DIR/super_extracted"
-$BIN_DIR/busybox rm -f "$TARGET_DIR/system_a.img" "$TARGET_DIR/vendor_a.img" "$TARGET_DIR/odm_a.img" "$TARGET_DIR/system_ext_a.img" "$TARGET_DIR/product_a.img" "$TARGET_DIR/original_checksums.txt" "$TARGET_DIR/new_checksums.txt" "$TARGET_DIR/original_checksums_norm.txt" "$TARGET_DIR/new_checksums_norm.txt" "$PAYLOAD_FILE" 
+download_file "https://raw.githubusercontent.com/arkt-7/Auto-Installer-Forge/main/bin/bootctl" "$TARGET_DIR/META-INF/com/arkt/bootctl"
+download_file "https://raw.githubusercontent.com/arkt-7/Auto-Installer-Forge/main/bin/derpfest-nabu/update-binary" "$TARGET_DIR/META-INF/com/google/android/update-binary"
+download_file "https://raw.githubusercontent.com/arkt-7/Auto-Installer-Forge/main/bin/derpfest-nabu/updater-script" "$TARGET_DIR/META-INF/com/google/android/updater-script"
+download_file "https://raw.githubusercontent.com/arkt-7/Auto-Installer-Forge/main/bin/derpfest-nabu/install_derpfest_linux.sh" "$TARGET_DIR/install_derpfest_linux.sh"
+download_file "https://raw.githubusercontent.com/arkt-7/Auto-Installer-Forge/main/bin/derpfest-nabu/install_derpfest_windows.bat" "$TARGET_DIR/install_derpfest_windows.bat"
+download_file "https://raw.githubusercontent.com/arkt-7/Auto-Installer-Forge/main/bin/derpfest-nabu/update_derpfest_linux.sh" "$TARGET_DIR/update_derpfest_linux.sh"
+download_file "https://raw.githubusercontent.com/arkt-7/Auto-Installer-Forge/main/bin/derpfest-nabu/update_derpfest_windows.bat" "$TARGET_DIR/update_derpfest_windows.bat"
+
+log "[INFO] Now will Download KernelSU NEXT and Magisk APK for ROOT access!\n[NOTE] Manually Add Patched ksu-n_boot.img, ksu-n_dtbo.img and magisk_boot.img in /images folder\n"
+
+download_file "https://raw.githubusercontent.com/arkt-7/Auto-Installer-Forge/main/bin/KernelSU_Next_v1.0.5.apk" "$TARGET_DIR/ROOT_APK_INSATLL_THIS_ONLY/KernelSU_Next_v1.0.5.apk"
+download_file "https://raw.githubusercontent.com/arkt-7/Auto-Installer-Forge/main/bin/Magisk_v28.1.apk" "$TARGET_DIR/ROOT_APK_INSATLL_THIS_ONLY/Magisk_v28.1.apk"
+
 cd
 rm -rf $BIN_DIR
-log "[SUCCESS] Cleanup complete."
-
 log "[COMPLETED] Auto-installer process finished successfully!"
