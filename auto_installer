@@ -14,7 +14,6 @@ BIN_DIR="/dev/tmp/arkt"
 WORK_DIR="/sdcard/arkt-auto-installer"
 
 mkdir -p "$BIN_DIR"
-mkdir -p "$WORK_DIR"
 
 log() {
     echo ""
@@ -39,6 +38,49 @@ download_and_set_permissions "$URL_PAYLOAD_DUMPER" "$BIN_DIR/payload-dumper-go"
 download_and_set_permissions "$URL_LPMAKE" "$BIN_DIR/lpmake"
 download_and_set_permissions "$URL_LPUNPACK" "$BIN_DIR/lpunpack"
 
+if [ -d "$WORK_DIR" ]; then
+    # Check if the directory contains any files or only empty folders
+    if [ -n "$(find "$WORK_DIR" -mindepth 1 -type f 2>/dev/null)" ]; then
+        while true; do
+            echo "\n[WARNING] Existing files found in $WORK_DIR. Choose an option:\n"
+            echo "1) Delete all existing files from $WORK_DIR and start fresh"
+            echo "2) Move old files to a backup folder"
+            echo "3) Exit script"
+            read -r choice
+
+            case "$choice" in
+                1)
+                    log "[INFO] Deleting existing files..."
+                    rm -rf "$WORK_DIR"/*
+                    log "[SUCCESS] Old files deleted."
+                    break
+                    ;;
+                2)
+                    TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
+                    BACKUP_DIR="${WORK_DIR}_backup_$TIMESTAMP"
+                    log "[INFO] Moving old files to $BACKUP_DIR..."
+                    mkdir -p "$BACKUP_DIR"
+                    mv "$WORK_DIR"/* "$BACKUP_DIR"/
+                    log "[SUCCESS] Files moved to $BACKUP_DIR."
+                    break
+                    ;;
+                3)
+                    log "[INFO] Exiting script. No changes made."
+                    exit 0
+                    ;;
+                *)
+                    log "[ERROR] Invalid input. Please select a valid option (1/2/3)."
+                    ;;
+            esac
+        done
+    else
+        # If only empty folders or no content exists, delete and recreate it
+        # log "[INFO] Work directory is empty or contains only empty folders. Cleaning up..."
+        rm -rf "$WORK_DIR"
+        mkdir -p "$WORK_DIR"
+        # log "[SUCCESS] Clean workspace ready."
+    fi
+fi
 
 echo ""
 echo "Searching for AOSP ROM RECOVERY ZIP files containing payload.bin..."
