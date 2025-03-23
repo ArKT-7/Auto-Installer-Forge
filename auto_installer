@@ -40,7 +40,7 @@ download_and_set_permissions "$URL_LPUNPACK" "$BIN_DIR/lpunpack"
 
 if [ -d "$WORK_DIR" ]; then
     # Check if the directory contains any files or only empty folders
-    if [ -n "$(find "$WORK_DIR" -mindepth 1 -type f 2>/dev/null)" ]; then
+	if [ -n "$($BIN_DIR/busybox find "$WORK_DIR" -mindepth 1 -type f 2>/dev/null)" ]; then
         while true; do
             echo "\n[WARNING] Existing files found in $WORK_DIR. Choose an option:\n"
             echo "1) Delete all existing files from $WORK_DIR and start fresh"
@@ -51,7 +51,7 @@ if [ -d "$WORK_DIR" ]; then
             case "$choice" in
                 1)
                     log "[INFO] Deleting existing files..."
-                    rm -rf "$WORK_DIR"/*
+                    $BIN_DIR/busybox rm -rf "$WORK_DIR"/*
                     log "[SUCCESS] Old files deleted."
                     break
                     ;;
@@ -59,8 +59,8 @@ if [ -d "$WORK_DIR" ]; then
                     TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
                     BACKUP_DIR="${WORK_DIR}_backup_$TIMESTAMP"
                     log "[INFO] Moving old files to $BACKUP_DIR..."
-                    mkdir -p "$BACKUP_DIR"
-                    mv "$WORK_DIR"/* "$BACKUP_DIR"/
+                    $BIN_DIR/busybox mkdir -p "$BACKUP_DIR"
+                    $BIN_DIR/busybox mv "$WORK_DIR"/* "$BACKUP_DIR"/
                     log "[SUCCESS] Files moved to $BACKUP_DIR."
                     break
                     ;;
@@ -76,8 +76,8 @@ if [ -d "$WORK_DIR" ]; then
     else
         # If only empty folders or no content exists, delete and recreate it
         # log "[INFO] Work directory is empty or contains only empty folders. Cleaning up..."
-        rm -rf "$WORK_DIR"
-        mkdir -p "$WORK_DIR"
+        $BIN_DIR/busybox rm -rf "$WORK_DIR"
+        $BIN_DIR/busybox mkdir -p "$WORK_DIR"
         # log "[SUCCESS] Clean workspace ready."
     fi
 fi
