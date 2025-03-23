@@ -257,6 +257,7 @@ for img in boot dtbo vendor_boot vbmeta vbmeta_system super; do
     $BIN_DIR/busybox mv "$TARGET_DIR/${img}.img" "$TARGET_DIR/images/${img}.img"
 done
 
+download_file "https://raw.githubusercontent.com/arkt-7/Auto-Installer-Forge/main/bin/userdata.img" "$TARGET_DIR/images/userdata.img"
 download_file "https://raw.githubusercontent.com/arkt-7/Auto-Installer-Forge/main/bin/bootctl" "$TARGET_DIR/META-INF/com/arkt/bootctl"
 download_file "https://raw.githubusercontent.com/arkt-7/Auto-Installer-Forge/main/bin/derpfest-nabu/update-binary" "$TARGET_DIR/META-INF/com/google/android/update-binary"
 download_file "https://raw.githubusercontent.com/arkt-7/Auto-Installer-Forge/main/bin/derpfest-nabu/updater-script" "$TARGET_DIR/META-INF/com/google/android/updater-script"
@@ -265,11 +266,32 @@ download_file "https://raw.githubusercontent.com/arkt-7/Auto-Installer-Forge/mai
 download_file "https://raw.githubusercontent.com/arkt-7/Auto-Installer-Forge/main/bin/derpfest-nabu/update_derpfest_linux.sh" "$TARGET_DIR/update_derpfest_linux.sh"
 download_file "https://raw.githubusercontent.com/arkt-7/Auto-Installer-Forge/main/bin/derpfest-nabu/update_derpfest_windows.bat" "$TARGET_DIR/update_derpfest_windows.bat"
 
+log "[INFO] Downloading Platform-tools and required binaries for auto-installer script...\n"
+
+download_file "https://dl.google.com/android/repository/platform-tools-latest-linux.zip" "$TARGET_DIR/bin/linux/platform-tools-windows.zip"
+echo "[INFO] Extracting Linux platform-tools..."
+$BIN_DIR/busybox unzip -q "$TARGET_DIR/bin/linux/platform-tools-windows.zip" -d "$TARGET_DIR/bin/linux/"
+log "[SUCCESS] Linux platform-tools extracted.\n"
+
+download_file "https://dl.google.com/android/repository/platform-tools-latest-windows.zip" "$TARGET_DIR/bin/windows/platform-tools-linux.zip"
+echo "[INFO] Extracting Windows platform-tools..."
+$BIN_DIR/busybox unzip -q "$TARGET_DIR/bin/windows/platform-tools-linux.zip" -d "$TARGET_DIR/bin/windows/"
+log "[SUCCESS] Windows platform-tools extracted.\n"
+
+download_file "https://github.com/dEajL3kA/tee-win32/releases/download/1.3.3/tee-win32.2023-11-27.zip" "$TARGET_DIR/bin/windows/tee.zip"
+echo "[INFO] Extracting tee for logging in windows..."
+$BIN_DIR/busybox unzip -q "$TARGET_DIR/bin/windows/tee.zip" -d "$TARGET_DIR/bin/windows/log-tool/"
+log "[SUCCESS] TEE for windows extracted."
+
 log "[INFO] Now will Download KernelSU NEXT and Magisk APK for ROOT access!\n[NOTE] Manually Add Patched ksu-n_boot.img, ksu-n_dtbo.img and magisk_boot.img in /images folder\n"
 
 download_file "https://raw.githubusercontent.com/arkt-7/Auto-Installer-Forge/main/bin/KernelSU_Next_v1.0.5.apk" "$TARGET_DIR/ROOT_APK_INSATLL_THIS_ONLY/KernelSU_Next_v1.0.5.apk"
 download_file "https://raw.githubusercontent.com/arkt-7/Auto-Installer-Forge/main/bin/Magisk_v28.1.apk" "$TARGET_DIR/ROOT_APK_INSATLL_THIS_ONLY/Magisk_v28.1.apk"
 
+log "[INFO] Cleaning up..."
+$BIN_DIR/busybox rm -f "$TARGET_DIR/bin/linux/platform-tools-windows.zip" "$TARGET_DIR/bin/windows/platform-tools-linux.zip" "$TARGET_DIR/bin/windows/tee.zip"
 cd
 rm -rf $BIN_DIR
+echo "[SUCCESS] Cleanup complete."
+
 log "[COMPLETED] Auto-installer process finished successfully!"
