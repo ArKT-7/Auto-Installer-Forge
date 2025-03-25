@@ -20,9 +20,6 @@ log() {
     echo "[$(date +"%H:%M:%S")] $1"
 }
 
-log "[INFO] Automating ROM conversion for easy Fastboot/Recovery flashing for Xiaomi Pad 5 (more devices planned)"
-log "[INFO] this script is Written and Made By °⊥⋊ɹ∀°, Telegram - '@ArKT_7', Github - 'ArKT-7'"
-
 # Function to download and set permissions
 download_and_set_permissions() {
     local url=$1 dest_file=$2
@@ -36,16 +33,105 @@ download_and_set_permissions() {
 download_file() {
     local url=$1 dest_file=$2
     #echo "[INFO] Downloading $(basename "$dest_file")..."
-    curl -s -L -o "$dest_file" "$url" || { log "[ERROR] Failed to download $(basename "$dest_file")"; exit 1; }
+    curl -s -L -o "$dest_file" "$url" || { log "[ERROR] Failed to download $(basename "$dest_file")"; }
     echo "[SUCCESS] $(basename "$dest_file") downloaded."
 }
 
+# Function to extract checksum from file
+get_checksum() {
+    local filename="$1"
+    if [ "$CHECKSUM_AVAILABLE" -eq 0 ]; then
+        echo ""
+        return
+    fi
+    grep "^$filename=" "$CHECKSUM_FILE" | cut -d'=' -f2
+}
+
+
+# Function to verify checksum
+verify_checksum() {
+    local file="$1"
+    local expected_checksum="$2"
+
+    if [ "$CHECKSUM_AVAILABLE" -eq 0 ]; then
+        #echo "[WARNING] Checksum verification skipped for $(basename "$file")."
+        return 0
+    fi
+
+    if [ -z "$expected_checksum" ]; then
+        echo "[WARNING] No checksum found for $(basename "$file"), skipping verification."
+        return 0  # Skip verification if no checksum is available
+    fi
+
+    local actual_checksum
+    actual_checksum=$($BIN_DIR/busybox sha256sum "$file" | awk '{print $1}')
+
+    if [ "$actual_checksum" = "$expected_checksum" ]; then
+        #echo "[SUCCESS] Checksum verified for $(basename "$file")."
+        return 0
+    else
+        echo "[ERROR] Checksum mismatch for $(basename "$file")! Expected: $expected_checksum, Got: $actual_checksum"
+        return 1
+    fi
+}
+
+# Function to attempt download with checksum validation
+download_with_fallback() {
+    PRIMARY_URL="$1"
+    FALLBACK_URL="$2"
+    DEST_FILE="$3"
+    FILE_KEY="$4"  # Key name in checksum file
+
+    #echo "[INFO] Downloading: $(basename "$DEST_FILE")"
+
+    EXPECTED_CHECKSUM=$(get_checksum "$FILE_KEY")
+
+    if download_file "$PRIMARY_URL" "$DEST_FILE"; then
+        if verify_checksum "$DEST_FILE" "$EXPECTED_CHECKSUM"; then
+            return 0  # Download successful with valid checksum
+        else
+            echo "[WARNING] Checksum mismatch, trying fallback...\n"
+            rm -f "$DEST_FILE"
+        fi
+    else
+        echo "[WARNING] Primary download failed, trying fallback...\n"
+    fi
+
+    # Try downloading from fallback source
+    if download_file "$FALLBACK_URL" "$DEST_FILE"; then
+        if verify_checksum "$DEST_FILE" "$EXPECTED_CHECKSUM"; then
+            return 0  # Fallback successful with valid checksum
+        else
+            echo "[ERROR] Fallback checksum mismatch! Continuing with warning..."
+            return 1
+        fi
+    else
+        echo "[ERROR] Failed to download $(basename "$DEST_FILE") from both sources! Continuing..."
+        return 1
+    fi
+}
+
+log "[INFO] Automating ROM conversion for easy Fastboot/Recovery flashing for Xiaomi Pad 5 (more devices planned)"
+log "[INFO] this script is Written and Made By °⊥⋊ɹ∀°, Telegram - '@ArKT_7', Github - 'ArKT-7'"
 
 # Download required binaries
 download_and_set_permissions "$URL_BUSYBOX" "$BIN_DIR/busybox"
 download_and_set_permissions "$URL_PAYLOAD_DUMPER" "$BIN_DIR/payload-dumper-go"
 download_and_set_permissions "$URL_LPMAKE" "$BIN_DIR/lpmake"
 download_and_set_permissions "$URL_LPUNPACK" "$BIN_DIR/lpunpack"
+# URL to the checksum file
+CHECKSUM_FILE="$BIN_DIR/checksum.arkt"
+CHECKSUM_AVAILABLE=1  # Assume checksum is available
+
+# Download checksum file
+#echo "[INFO] Downloading checksum file..."
+if ! download_file "https://raw.githubusercontent.com/arkt-7/Auto-Installer-Forge/main/bin/checksum.arkt" "$CHECKSUM_FILE"; then
+    #echo "[WARNING] Failed to download checksum file. Continuing without checksum verification!"
+    CHECKSUM_AVAILABLE=0  # Set flag to disable checksum verification
+elif ! grep -q "=" "$CHECKSUM_FILE"; then
+    #echo "[WARNING] Checksum file is invalid or empty. Skipping verification!"
+    CHECKSUM_AVAILABLE=0  # Mark as unavailable if it's empty or corrupted
+fi
 
 if [ -d "$WORK_DIR" ]; then
     # Check if the directory contains any files or only empty folders
@@ -257,39 +343,103 @@ for img in boot dtbo vendor_boot vbmeta vbmeta_system super; do
     $BIN_DIR/busybox mv "$TARGET_DIR/${img}.img" "$TARGET_DIR/images/${img}.img"
 done
 
-download_file "https://raw.githubusercontent.com/arkt-7/Auto-Installer-Forge/main/bin/userdata.img" "$TARGET_DIR/images/userdata.img"
-download_file "https://raw.githubusercontent.com/arkt-7/Auto-Installer-Forge/main/bin/bootctl" "$TARGET_DIR/META-INF/com/arkt/bootctl"
-download_file "https://raw.githubusercontent.com/arkt-7/Auto-Installer-Forge/main/bin/derpfest-nabu/update-binary" "$TARGET_DIR/META-INF/com/google/android/update-binary"
-download_file "https://raw.githubusercontent.com/arkt-7/Auto-Installer-Forge/main/bin/derpfest-nabu/updater-script" "$TARGET_DIR/META-INF/com/google/android/updater-script"
-download_file "https://raw.githubusercontent.com/arkt-7/Auto-Installer-Forge/main/bin/derpfest-nabu/install_derpfest_linux.sh" "$TARGET_DIR/install_derpfest_linux.sh"
-download_file "https://raw.githubusercontent.com/arkt-7/Auto-Installer-Forge/main/bin/derpfest-nabu/install_derpfest_windows.bat" "$TARGET_DIR/install_derpfest_windows.bat"
-download_file "https://raw.githubusercontent.com/arkt-7/Auto-Installer-Forge/main/bin/derpfest-nabu/update_derpfest_linux.sh" "$TARGET_DIR/update_derpfest_linux.sh"
-download_file "https://raw.githubusercontent.com/arkt-7/Auto-Installer-Forge/main/bin/derpfest-nabu/update_derpfest_windows.bat" "$TARGET_DIR/update_derpfest_windows.bat"
+#still gotta upload to mirror location for fallback
+download_with_fallback \
+    "https://raw.githubusercontent.com/arkt-7/Auto-Installer-Forge/main/bin/files/userdata.img" \
+    "https://raw.githubusercontent.com/arkt-7/Auto-Installer-Forge/main/bin/files/userdata.img" \
+    "$TARGET_DIR/images/userdata.img" \
+    "userdata"
+	
+download_with_fallback \
+    "https://raw.githubusercontent.com/arkt-7/Auto-Installer-Forge/main/bin/bootctl" \
+    "https://raw.githubusercontent.com/arkt-7/Auto-Installer-Forge/main/bin/bootctl" \
+    "$TARGET_DIR/META-INF/com/arkt/bootctl" \
+    "bootctl"
 
-log "[INFO] Downloading Platform-tools and required binaries for auto-installer script...\n"
+download_with_fallback \
+    "https://raw.githubusercontent.com/arkt-7/Auto-Installer-Forge/main/bin/derpfest-nabu/update-binary" \
+    "https://raw.githubusercontent.com/arkt-7/Auto-Installer-Forge/main/bin/derpfest-nabu/update-binary" \
+    "$TARGET_DIR/META-INF/com/google/android/update-binary" \
+    "update-binary"
+	
+download_with_fallback \
+    "https://raw.githubusercontent.com/arkt-7/Auto-Installer-Forge/main/bin/derpfest-nabu/updater-script" \
+    "https://raw.githubusercontent.com/arkt-7/Auto-Installer-Forge/main/bin/derpfest-nabu/updater-script" \
+    "$TARGET_DIR/META-INF/com/google/android/updater-script" \
+    "updater-script"
+	
+download_with_fallback \
+    "https://raw.githubusercontent.com/arkt-7/Auto-Installer-Forge/main/bin/derpfest-nabu/install_derpfest_linux.sh" \
+    "https://raw.githubusercontent.com/arkt-7/Auto-Installer-Forge/main/bin/derpfest-nabu/install_derpfest_linux.sh" \
+    "$TARGET_DIR/install_derpfest_linux.sh" \
+    "install-derpfest-linux-script"
+	
+download_with_fallback \
+    "https://raw.githubusercontent.com/arkt-7/Auto-Installer-Forge/main/bin/derpfest-nabu/install_derpfest_windows.bat" \
+    "https://raw.githubusercontent.com/arkt-7/Auto-Installer-Forge/main/bin/derpfest-nabu/install_derpfest_windows.bat" \
+    "$TARGET_DIR/install_derpfest_windows.bat" \
+    "install-derpfest-windows-script"
+	
+download_with_fallback \
+    "https://raw.githubusercontent.com/arkt-7/Auto-Installer-Forge/main/bin/derpfest-nabu/update_derpfest_linux.sh" \
+    "https://raw.githubusercontent.com/arkt-7/Auto-Installer-Forge/main/bin/derpfest-nabu/update_derpfest_linux.sh" \
+    "$TARGET_DIR/update_derpfest_linux.sh" \
+    "update-derpfest-linux-script"
+	
+download_with_fallback \
+    "https://raw.githubusercontent.com/arkt-7/Auto-Installer-Forge/main/bin/derpfest-nabu/update_derpfest_windows.bat" \
+    "https://raw.githubusercontent.com/arkt-7/Auto-Installer-Forge/main/bin/derpfest-nabu/update_derpfest_windows.bat" \
+    "$TARGET_DIR/update_derpfest_windows.bat" \
+    "update-derpfest-windows-script"
 
-download_file "https://dl.google.com/android/repository/platform-tools-latest-linux.zip" "$TARGET_DIR/bin/linux/platform-tools-windows.zip"
+log "[INFO] Downloading Platform-tools and required tools for auto-installer script...\n"
+
+download_with_fallback \
+    "https://dl.google.com/android/repository/platform-tools-latest-linux.zip" \
+    "https://raw.githubusercontent.com/arkt-7/Auto-Installer-Forge/main/bin/files/platform-tools-latest-linux.zip" \
+    "$TARGET_DIR/bin/linux/platform-tools-linux.zip" \
+    "pt-linux"
+	
 echo "[INFO] Extracting Linux platform-tools..."
-$BIN_DIR/busybox unzip -q "$TARGET_DIR/bin/linux/platform-tools-windows.zip" -d "$TARGET_DIR/bin/linux/"
+$BIN_DIR/busybox unzip -q "$TARGET_DIR/bin/linux/platform-tools-linux.zip" -d "$TARGET_DIR/bin/linux/"
 log "[SUCCESS] Linux platform-tools extracted.\n"
 
-download_file "https://dl.google.com/android/repository/platform-tools-latest-windows.zip" "$TARGET_DIR/bin/windows/platform-tools-linux.zip"
+download_with_fallback \
+    "https://dl.google.com/android/repository/platform-tools-latest-windows.zip" \
+    "https://raw.githubusercontent.com/arkt-7/Auto-Installer-Forge/main/bin/files/platform-tools-latest-windows.zip" \
+    "$TARGET_DIR/bin/windows/platform-tools-windows.zip" \
+    "pt-win"
+	
 echo "[INFO] Extracting Windows platform-tools..."
-$BIN_DIR/busybox unzip -q "$TARGET_DIR/bin/windows/platform-tools-linux.zip" -d "$TARGET_DIR/bin/windows/"
+$BIN_DIR/busybox unzip -q "$TARGET_DIR/bin/windows/platform-tools-windows.zip" -d "$TARGET_DIR/bin/windows/"
 log "[SUCCESS] Windows platform-tools extracted.\n"
 
-download_file "https://github.com/dEajL3kA/tee-win32/releases/download/1.3.3/tee-win32.2023-11-27.zip" "$TARGET_DIR/bin/windows/tee.zip"
+download_with_fallback \
+    "https://github.com/dEajL3kA/tee-win32/releases/download/1.3.3/tee-win32.2023-11-27.zip" \
+    "https://raw.githubusercontent.com/arkt-7/Auto-Installer-Forge/main/bin/files/tee-win32.2023-11-27.zip" \
+    "$TARGET_DIR/bin/windows/tee.zip" \
+    "tee"
+	
 echo "[INFO] Extracting tee for logging in windows..."
 $BIN_DIR/busybox unzip -q "$TARGET_DIR/bin/windows/tee.zip" -d "$TARGET_DIR/bin/windows/log-tool/"
 log "[SUCCESS] TEE for windows extracted."
 
 log "[INFO] Now will Download KernelSU NEXT and Magisk APK for ROOT access!\n[NOTE] Manually Add Patched ksu-n_boot.img, ksu-n_dtbo.img and magisk_boot.img in /images folder\n"
 
-download_file "https://raw.githubusercontent.com/arkt-7/Auto-Installer-Forge/main/bin/KernelSU_Next_v1.0.5.apk" "$TARGET_DIR/ROOT_APK_INSATLL_THIS_ONLY/KernelSU_Next_v1.0.5.apk"
-download_file "https://raw.githubusercontent.com/arkt-7/Auto-Installer-Forge/main/bin/Magisk_v28.1.apk" "$TARGET_DIR/ROOT_APK_INSATLL_THIS_ONLY/Magisk_v28.1.apk"
+download_with_fallback \
+    "https://github.com/KernelSU-Next/KernelSU-Next/releases/download/v1.0.5/KernelSU_Next_v1.0.5_12430-release.apk" \
+    "https://raw.githubusercontent.com/arkt-7/Auto-Installer-Forge/main/bin/files/KernelSU_Next_v1.0.5.apk" \
+    "$TARGET_DIR/ROOT_APK_INSATLL_THIS_ONLY/KernelSU_Next_v1.0.5.apk" \
+    "KSU-N"
+
+download_with_fallback \
+    "https://github.com/topjohnwu/Magisk/releases/download/v28.1/Magisk-v28.1.apk" \
+    "https://raw.githubusercontent.com/arkt-7/Auto-Installer-Forge/main/bin/files/Magisk_v28.1.apk" \
+    "$TARGET_DIR/ROOT_APK_INSATLL_THIS_ONLY/Magisk_v28.1.apk" \
+    "Magisk"
 
 log "[INFO] Cleaning up..."
-$BIN_DIR/busybox rm -f "$TARGET_DIR/bin/linux/platform-tools-windows.zip" "$TARGET_DIR/bin/windows/platform-tools-linux.zip" "$TARGET_DIR/bin/windows/tee.zip"
+$BIN_DIR/busybox rm -f "$TARGET_DIR/bin/linux/platform-tools-linux.zip" "$TARGET_DIR/bin/windows/platform-tools-windows.zip" "$TARGET_DIR/bin/windows/tee.zip"
 cd
 rm -rf $BIN_DIR
 echo "[SUCCESS] Cleanup complete."
