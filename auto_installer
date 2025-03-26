@@ -70,7 +70,7 @@ verify_checksum() {
         #echo "[SUCCESS] Checksum verified for $(basename "$file")."
         return 0
     else
-        echo "[ERROR] Checksum mismatch for $(basename "$file")! Expected: $expected_checksum, Got: $actual_checksum"
+        echo "\n[ERROR] Checksum mismatch for $(basename "$file")! Expected: $expected_checksum, Got: $actual_checksum"
         return 1
     fi
 }
@@ -102,7 +102,7 @@ download_with_fallback() {
         if verify_checksum "$DEST_FILE" "$EXPECTED_CHECKSUM"; then
             return 0  # Fallback successful with valid checksum
         else
-            echo "[ERROR] Fallback checksum mismatch! Continuing with warning..."
+            echo "[ERROR] Fallback checksum mismatch! Continuing with warning...\n"
             return 1
         fi
     else
