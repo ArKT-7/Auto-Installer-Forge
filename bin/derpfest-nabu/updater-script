@@ -85,7 +85,7 @@ ui_print " Flashing super image.."
 package_extract_image "images/super.img" "/dev/block/platform/soc/1d84000.ufshc/by-name/super"
 
 ui_print " "
-ui_print "Set active boot slot a..."
+ui_print " Set active boot slot a..."
 change_slot a
 
 set_progress 1.0
