@@ -366,13 +366,13 @@ download_with_fallback \
     "https://raw.githubusercontent.com/arkt-7/Auto-Installer-Forge/main/bin/libhidltransport.so" \
     "https://raw.githubusercontent.com/arkt-7/Auto-Installer-Forge/main/bin/libhidltransport.so" \
     "$TARGET_DIR/META-INF/com/arkt/libhidltransport.so" \
-    "libhidltransport.so"
+    "libhidltransport"
 
 download_with_fallback \
     "https://raw.githubusercontent.com/arkt-7/Auto-Installer-Forge/main/bin/libhwbinder.so" \
     "https://raw.githubusercontent.com/arkt-7/Auto-Installer-Forge/main/bin/libhwbinder.so" \
     "$TARGET_DIR/META-INF/com/arkt/libhwbinder.so" \
-    "libhwbinder.so"
+    "libhwbinder"
 
 download_with_fallback \
     "https://raw.githubusercontent.com/arkt-7/Auto-Installer-Forge/main/bin/derpfest-nabu/update-binary" \
