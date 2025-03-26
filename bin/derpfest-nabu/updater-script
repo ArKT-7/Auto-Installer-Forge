@@ -1,67 +1,102 @@
 #!/sbin/bash
-#
-# Copyright (C) 2025-26 https://github.com/ArKT-7
-#
-# Made for flash Android rom in recovery for Xiaomi Pad 5 (Nabu) 
-#
 
-assert(getprop("ro.product.device") == "nabu" || abort("ERROR: This package is for device: Nabu Xiaomi pad 5; this device is " + getprop("ro.product.device") + "."););
-ui_print("----------------------------------------------------");
-ui_print("      ____                  _____         _         ");
-ui_print("     |  _ \  ___ _ __ _ __ |  ___|__  ___| |_       ");
-ui_print("     | | | |/ _ \ '__| '_ \| |_ / _ \/ __| __|      ");
-ui_print("     | |_| |  __/ |  | |_) |  _|  __/\__ \ |_       ");
-ui_print("     |____/ \___|_|  | .__/|_|  \___||___/\__|      ");
-ui_print("                     |_|                            ");
-ui_print("                                                    ");
-ui_print("          Are you ready for the Derpness?           ");
-ui_print("                                                    ");
-ui_print("----------------------------------------------------");
-ui_print(" Android version: 15");
-ui_print(" Device: Xiaomi Pad 5");
-ui_print(" Security patch: 2025-03-01");
-ui_print(" Build date: Mon March 17 2025");
-ui_print(" Derfest Version: Official-Stable-nabu-20250317-2003");
-ui_print("----------------------------------------------------");
-ui_print(" ");
-show_progress(0.020000, 10);
-package_extract_file("META-INF/com/arkt/bootctl", "/tmp/bootctl");
-run_program("/sbin/sh", "-c", "chmod 777 /tmp/bootctl");
-ui_print("Set active boot slot a...");
-run_program("/tmp/bootctl", "set-active-boot-slot", "0");
-ui_print(" ");
-ui_print("Flashing boot image..");
-package_extract_file("images/boot.img", "/dev/block/platform/soc/1d84000.ufshc/by-name/boot_a");
-package_extract_file("images/boot.img", "/dev/block/platform/soc/1d84000.ufshc/by-name/boot_b");
-show_progress(0.100000, 10);
-ui_print(" ");
-ui_print("Flashing dtbo image..");
-package_extract_file("images/dtbo.img", "/dev/block/platform/soc/1d84000.ufshc/by-name/dtbo_a");
-package_extract_file("images/dtbo.img", "/dev/block/platform/soc/1d84000.ufshc/by-name/dtbo_b");
-show_progress(0.020000, 10);
-ui_print(" ");
-ui_print("Flashing vendor_boot image..");
-package_extract_file("images/vendor_boot.img", "/dev/block/platform/soc/1d84000.ufshc/by-name/vendor_boot_a");
-package_extract_file("images/vendor_boot.img", "/dev/block/platform/soc/1d84000.ufshc/by-name/vendor_boot_b");
-show_progress(0.100000, 10);
-ui_print(" ");
-ui_print("Flashing vbmeta image..");
-package_extract_file("images/vbmeta.img", "/dev/block/platform/soc/1d84000.ufshc/by-name/vbmeta_a");
-package_extract_file("images/vbmeta.img", "/dev/block/platform/soc/1d84000.ufshc/by-name/vbmeta_b");
-show_progress(0.020000, 10);
-ui_print(" ");
-ui_print("Flashing vbmeta_system image..");
-package_extract_file("images/vbmeta_system.img", "/dev/block/platform/soc/1d84000.ufshc/by-name/vbmeta_system_a");
-package_extract_file("images/vbmeta_system.img", "/dev/block/platform/soc/1d84000.ufshc/by-name/vbmeta_system_b");
-ui_print(" ");
-show_progress(1.000000, 160);
-ui_print("Flashing super image..");
-package_extract_file("images/super.img", "/dev/block/platform/soc/1d84000.ufshc/by-name/super");
-run_program("/tmp/bootctl", "set-active-boot-slot", "0");
-set_progress(1);
-ui_print(" ");
-ui_print("rom by P.A.N.Z. ");
-ui_print(" ");
-ui_print("Flasher by ArKT ");
-ui_print(" ");
-ui_print("Done!");
+if [ "$(getprop ro.product.device)" != "nabu" ]; then 
+    ui_print "This script is only for Xiaomi Pad 5 (NABU)"
+    ui_print "Your device is $(getprop ro.product.device)." 
+    exit 1
+fi
+
+ui_print "----------------------------------------------------"
+ui_print "      ____                  _____         _         "
+ui_print "     |  _ \  ___ _ __ _ __ |  ___|__  ___| |_       "
+ui_print "     | | | |/ _ \ '__| '_ \| |_ / _ \/ __| __|      "
+ui_print "     | |_| |  __/ |  | |_) |  _|  __/\__ \ |_       "
+ui_print "     |____/ \___|_|  | .__/|_|  \___||___/\__|      "
+ui_print "                     |_|                            "
+ui_print "                                                    "
+ui_print "          Are you ready for the Derpness?           "
+ui_print "                                                    "
+ui_print "----------------------------------------------------"
+ui_print " Android version: 15"
+ui_print " Device: Xiaomi Pad 5"
+ui_print " Security patch: 2025-03-01"
+ui_print " Build date: Mon March 17 2025"
+ui_print " Derpfest Version: Official-Stable-nabu-20250317-2003"
+ui_print " Auto-Installer Version: 2.4-beta"
+ui_print "----------------------------------------------------"
+ui_print " "
+#ui_print " Verifying files integrity and checks"
+check_file_and_hash "images/boot.img" "bd216396b66d22b76401f736e29a931b0344909a522cf8fbab55980082faa2b2"
+check_file "images/boot.img"
+check_file "images/dtbo.img"
+check_file "images/ksu-n_boot.img" 
+check_file "images/ksu-n_dtbo.img" 
+check_file "images/magisk_boot.img" 
+check_file "images/vendor_boot.img" 
+check_file "images/vbmeta.img" 
+check_file "images/vbmeta_system.img" 
+check_file "images/userdata.img"
+check_file "images/super.img" 
+#ui_print " "
+#ui_print " Verifications Done"
+#ui_print " "
+ui_print "Choose installation method:"
+ui_print " "
+set_progress 0.01    
+progress 0.10 2  
+
+options=("Option 1: No ROOT" "Option 2: Root with Kernel SU - KSU" "Option 3: Root with Magisk 28.1" "Option 4: Cancel Flashing ROM")
+navigate_menu "${options[@]}"
+
+# Process based on selection
+case "$selection" in
+  0)
+    ui_print " "
+	flash_image "boot" "boot" 0.02 3
+	flash_image "dtbo" "dtbo" 0.03 3
+	change_slot a
+    ;;
+  1)
+    ui_print " "
+	flash_image "ksu-n_boot" "boot" 0.02 3
+	flash_image "ksu-n_dtbo" "dtbo" 0.03 3
+	change_slot a
+    ;;
+  2)
+    ui_print " "
+	flash_image "magisk_boot" "boot" 0.02 3
+	flash_image "dtbo" "dtbo" 0.03 3
+	change_slot a
+    ;;
+  3)
+    ui_print " "
+	ui_print "Okey, see u soon! XD"
+	rm -rf $UPD_TEMP_FOLDER
+    exit
+    ;;
+esac
+
+flash_image "vendor_boot" "vendor_boot" 0.04 2
+flash_image "vbmeta" "vbmeta" 0.05 2
+flash_image "vbmeta_system" "vbmeta_system" 0.06 2
+
+progress 0.9 100  
+ui_print " Flashing super image.."
+package_extract_image "images/super.img" "/dev/block/platform/soc/1d84000.ufshc/by-name/super"
+
+ui_print " "
+ui_print "Set active boot slot a..."
+change_slot a
+
+set_progress 1.0
+ui_print " "
+ui_print "-----------------"
+ui_print " rom by P.A.N.Z. "
+ui_print " "
+ui_print " Flasher by ArKT "
+ui_print "-----------------"
+ui_print " "
+ui_print " Enjoy Derpfest!"
+ui_print " "
+rm -rf $UPD_TEMP_FOLDER
+exit
