@@ -456,6 +456,46 @@ download_with_fallback \
     "$TARGET_DIR/ROOT_APK_INSATLL_THIS_ONLY/Magisk_v28.1.apk" \
     "Magisk"
 
+log "[INFO] Patching boot.img with magisk 28.1...\n"
+
+# Unzip only assets and lib folders beacause only that required for patching boot.img
+unzip -q -o "$TARGET_DIR/ROOT_APK_INSATLL_THIS_ONLY/Magisk_v28.1.apk" "assets/*" "lib/*" -d "$MAGISK_DIR" || { echo "Failed to unzip Magisk APK"; exit 1; }
+
+ARCH=$(getprop ro.product.cpu.abi) 
+case "$ARCH" in
+    arm64-v8a) ARCH_DIR="arm64-v8a" ;;
+    armeabi-v7a) ARCH_DIR="armeabi-v7a" ;;
+    x86) ARCH_DIR="x86" ;;
+    x86_64) ARCH_DIR="x86_64" ;;
+    *) echo "Unsupported architecture: $ARCH"; exit 1 ;;
+esac
+
+LIB_PATH="$MAGISK_DIR/lib/$ARCH_DIR"
+if [ -d "$LIB_PATH" ]; then
+    for file in "$LIB_PATH"/*.so; do
+        [ -f "$file" ] || continue
+        new_name=$(basename "$file" | sed -E 's/^lib(.*)\.so$/\1/')
+        mv "$file" "$MAGISK_DIR/assets/$new_name"
+    done
+else
+    echo "Library folder not found for $ARCH_DIR"
+    exit 1
+fi
+
+chmod -R 777 "$MAGISK_DIR/assets/"
+
+# Modify boot_patch.sh to hardcode "sda19" instead of auto-detecting for nabu
+sed -i 's/\$BOOTMODE && \[ -z "\$PREINITDEVICE" \] && PREINITDEVICE=\$(\.\/magisk --preinit-device)/PREINITDEVICE="sda19"/' "$MAGISK_DIR/assets/boot_patch.sh"
+
+"$MAGISK_DIR/assets/boot_patch.sh" "$TARGET_DIR/images/boot.img"
+
+if [ -f "$MAGISK_DIR/assets/new-boot.img" ]; then
+    mv "$MAGISK_DIR/assets/new-boot.img" "$TARGET_DIR/images/magisk_boot.img"
+    log "[SUCCESS] Patching successful! Magisk boot image saved at: $TARGET_DIR/images/magisk_boot.img"
+else
+    log "[ERROR] Patching unsuccessful. Please Patch manually and add to /images folder..."
+fi
+
 log "[INFO] Cleaning up..."
 $BIN_DIR/busybox rm -f "$TARGET_DIR/bin/linux/platform-tools-linux.zip" "$TARGET_DIR/bin/windows/platform-tools-windows.zip" "$TARGET_DIR/bin/windows/tee.zip"
 cd
