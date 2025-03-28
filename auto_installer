@@ -459,7 +459,7 @@ download_with_fallback \
 log "[INFO] Patching boot.img with magisk 28.1...\n"
 
 # Unzip only assets and lib folders beacause only that required for patching boot.img
-$BIN_DIR/busybox unzip -q -o "$TARGET_DIR/ROOT_APK_INSATLL_THIS_ONLY/Magisk_v28.1.apk" "assets/*" "lib/*" -d "$MAGISK_DIR" || { echo "Failed to unzip Magisk APK"; exit 1; }
+$BIN_DIR/busybox unzip -q -o "$TARGET_DIR/ROOT_APK_INSATLL_THIS_ONLY/Magisk_v28.1.apk" "assets/*" "lib/*" -d "$MAGISK_DIR" || { echo "Failed to unzip Magisk APK"; }
 
 ARCH=$(getprop ro.product.cpu.abi) 
 case "$ARCH" in
@@ -490,7 +490,7 @@ $BIN_DIR/busybox sed -i 's/\$BOOTMODE && \[ -z "\$PREINITDEVICE" \] && PREINITDE
 "$MAGISK_DIR/assets/boot_patch.sh" "$TARGET_DIR/images/boot.img"
 
 if [ -f "$MAGISK_DIR/assets/new-boot.img" ]; then
-    mv "$MAGISK_DIR/assets/new-boot.img" "$TARGET_DIR/images/magisk_boot.img"
+    $BIN_DIR/busybox mv "$MAGISK_DIR/assets/new-boot.img" "$TARGET_DIR/images/magisk_boot.img"
     log "[SUCCESS] Patching successful! Magisk boot image saved at: $TARGET_DIR/images/magisk_boot.img"
 else
     log "[ERROR] Patching unsuccessful. Please Patch manually and add to /images folder..."
