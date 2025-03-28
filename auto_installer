@@ -12,8 +12,10 @@ URL_LPUNPACK="https://raw.githubusercontent.com/arkt-7/Auto-Installer-Forge/main
 
 BIN_DIR="/dev/tmp/arkt"
 WORK_DIR="/sdcard/arkt-auto-installer"
+MAGISK_DIR="BIN_DIR/magisk_patch"
 
 mkdir -p "$BIN_DIR"
+mkdir -p "$MAGISK_DIR"
 
 log() {
     echo ""
