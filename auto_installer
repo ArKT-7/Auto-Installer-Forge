@@ -459,7 +459,7 @@ download_with_fallback \
 log "[INFO] Patching boot.img with magisk 28.1...\n"
 
 # Unzip only assets and lib folders beacause only that required for patching boot.img
-unzip -q -o "$TARGET_DIR/ROOT_APK_INSATLL_THIS_ONLY/Magisk_v28.1.apk" "assets/*" "lib/*" -d "$MAGISK_DIR" || { echo "Failed to unzip Magisk APK"; exit 1; }
+$BIN_DIR/busybox unzip -q -o "$TARGET_DIR/ROOT_APK_INSATLL_THIS_ONLY/Magisk_v28.1.apk" "assets/*" "lib/*" -d "$MAGISK_DIR" || { echo "Failed to unzip Magisk APK"; exit 1; }
 
 ARCH=$(getprop ro.product.cpu.abi) 
 case "$ARCH" in
@@ -474,7 +474,7 @@ LIB_PATH="$MAGISK_DIR/lib/$ARCH_DIR"
 if [ -d "$LIB_PATH" ]; then
     for file in "$LIB_PATH"/*.so; do
         [ -f "$file" ] || continue
-        new_name=$(basename "$file" | sed -E 's/^lib(.*)\.so$/\1/')
+        new_name=$(basename "$file" | $BIN_DIR/busybox sed -E 's/^lib(.*)\.so$/\1/')
         mv "$file" "$MAGISK_DIR/assets/$new_name"
     done
 else
@@ -485,7 +485,7 @@ fi
 chmod -R 777 "$MAGISK_DIR/assets/"
 
 # Modify boot_patch.sh to hardcode "sda19" instead of auto-detecting for nabu
-sed -i 's/\$BOOTMODE && \[ -z "\$PREINITDEVICE" \] && PREINITDEVICE=\$(\.\/magisk --preinit-device)/PREINITDEVICE="sda19"/' "$MAGISK_DIR/assets/boot_patch.sh"
+$BIN_DIR/busybox sed -i 's/\$BOOTMODE && \[ -z "\$PREINITDEVICE" \] && PREINITDEVICE=\$(\.\/magisk --preinit-device)/PREINITDEVICE="sda19"/' "$MAGISK_DIR/assets/boot_patch.sh"
 
 "$MAGISK_DIR/assets/boot_patch.sh" "$TARGET_DIR/images/boot.img"
 
