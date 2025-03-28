@@ -28,7 +28,7 @@ ARCH=$(getprop ro.product.cpu.abi)
 download_and_set_permissions() {
     local url=$1 dest_file=$2
     log "[INFO] Downloading $(basename "$dest_file")..."
-    curl -s -L -o "$dest_file" "$url" || { log "[ERROR] Failed to download $(basename "$dest_file")"; exit 1; }
+    curl -L --progress-bar -o "$dest_file" "$url" || { log "[ERROR] Failed to download $(basename "$dest_file")"; exit 1; }
     chmod 755 "$dest_file"
     echo "[SUCCESS] $(basename "$dest_file") ready."
 }
@@ -37,7 +37,7 @@ download_and_set_permissions() {
 download_file() {
     local url=$1 dest_file=$2
     #echo "[INFO] Downloading $(basename "$dest_file")..."
-    curl -s -L -o "$dest_file" "$url" || { log "[ERROR] Failed to download $(basename "$dest_file")"; }
+    curl -L --progress-bar -o "$dest_file" "$url" || { log "[ERROR] Failed to download $(basename "$dest_file")"; }
     echo "[SUCCESS] $(basename "$dest_file") downloaded."
 }
 
@@ -115,8 +115,66 @@ download_with_fallback() {
     fi
 }
 
+# Function to patch boot.img with magisk
+patch_magisk_boot() {
+    log "[INFO] Patching boot.img with Magisk 28.1...\n"
+
+    # Unzip only assets and lib folders; if unzip fails, exit
+    if ! $BIN_DIR/busybox unzip -q -o "$TARGET_DIR/ROOT_APK_INSATLL_THIS_ONLY/Magisk_v28.1.apk" "assets/*" "lib/*" -d "$MAGISK_DIR"; then
+        log "[ERROR] Failed to unzip Magisk APK"
+        return 1
+    fi
+
+    case "$ARCH" in
+        arm64-v8a) ARCH_DIR="arm64-v8a" ;;
+        armeabi-v7a) ARCH_DIR="armeabi-v7a" ;;
+        x86) ARCH_DIR="x86" ;;
+        x86_64) ARCH_DIR="x86_64" ;;
+        *) log "[ERROR] Unsupported architecture: $ARCH"; return 1 ;;
+    esac
+
+    LIB_PATH="$MAGISK_DIR/lib/$ARCH_DIR"
+    if [ -d "$LIB_PATH" ]; then
+        for file in "$LIB_PATH"/*.so; do
+            [ -f "$file" ] || continue
+            new_name=$(basename "$file" | $BIN_DIR/busybox sed -E 's/^lib(.*)\.so$/\1/')
+            mv "$file" "$MAGISK_DIR/assets/$new_name"
+        done
+    else
+        log "[ERROR] Library folder not found for $ARCH_DIR"
+        return 1
+    fi
+
+    chmod -R 777 "$MAGISK_DIR/assets/"
+
+    # Modify boot_patch.sh to hardcode "sda19" for NABU
+    if ! $BIN_DIR/busybox sed -i 's/\$BOOTMODE && \[ -z "\$PREINITDEVICE" \] && PREINITDEVICE=\$(\.\/magisk --preinit-device)/PREINITDEVICE="sda19"/' "$MAGISK_DIR/assets/boot_patch.sh"; then
+        log "[ERROR] Failed to modify boot_patch.sh"
+        return 1
+    fi
+
+    "$MAGISK_DIR/assets/boot_patch.sh" "$TARGET_DIR/images/boot.img"
+
+    if [ -f "$MAGISK_DIR/assets/new-boot.img" ]; then
+        $BIN_DIR/busybox cp "$MAGISK_DIR/assets/new-boot.img" "$TARGET_DIR/images/magisk_boot.img"
+        log "[SUCCESS] Patching successful! Magisk boot image saved at: $TARGET_DIR/images/magisk_boot.img"
+    else
+        log "[ERROR] Patching unsuccessful. Please patch manually and add to /images folder..."
+        return 1
+    fi
+
+    return 0
+}
+
+
 log "[INFO] Automating ROM conversion for easy Fastboot/Recovery flashing for Xiaomi Pad 5 (more devices planned)"
 log "[INFO] this script is Written and Made By °⊥⋊ɹ∀°, Telegram - '@ArKT_7', Github - 'ArKT-7'"
+
+AVAILABLE_SPACE=$(df "$WORK_DIR" | awk 'NR==2 {print $4}')
+if [ "$AVAILABLE_SPACE" -lt 15000000 ]; then
+    log "[ERROR] Not enough space. Need at least 15GB free!"
+    exit 1
+fi
 
 # Download required binaries
 download_and_set_permissions "$URL_BUSYBOX" "$BIN_DIR/busybox"
@@ -459,56 +517,6 @@ download_with_fallback \
     "https://raw.githubusercontent.com/arkt-7/Auto-Installer-Forge/main/bin/files/Magisk_v28.1.apk" \
     "$TARGET_DIR/ROOT_APK_INSATLL_THIS_ONLY/Magisk_v28.1.apk" \
     "Magisk"
-
-patch_magisk_boot() {
-    log "[INFO] Patching boot.img with Magisk 28.1...\n"
-
-    # Unzip only assets and lib folders; if unzip fails, exit
-    if ! $BIN_DIR/busybox unzip -q -o "$TARGET_DIR/ROOT_APK_INSATLL_THIS_ONLY/Magisk_v28.1.apk" "assets/*" "lib/*" -d "$MAGISK_DIR"; then
-        log "[ERROR] Failed to unzip Magisk APK"
-        return 1
-    fi
-
-    case "$ARCH" in
-        arm64-v8a) ARCH_DIR="arm64-v8a" ;;
-        armeabi-v7a) ARCH_DIR="armeabi-v7a" ;;
-        x86) ARCH_DIR="x86" ;;
-        x86_64) ARCH_DIR="x86_64" ;;
-        *) log "[ERROR] Unsupported architecture: $ARCH"; return 1 ;;
-    esac
-
-    LIB_PATH="$MAGISK_DIR/lib/$ARCH_DIR"
-    if [ -d "$LIB_PATH" ]; then
-        for file in "$LIB_PATH"/*.so; do
-            [ -f "$file" ] || continue
-            new_name=$(basename "$file" | $BIN_DIR/busybox sed -E 's/^lib(.*)\.so$/\1/')
-            mv "$file" "$MAGISK_DIR/assets/$new_name"
-        done
-    else
-        log "[ERROR] Library folder not found for $ARCH_DIR"
-        return 1
-    fi
-
-    chmod -R 777 "$MAGISK_DIR/assets/"
-
-    # Modify boot_patch.sh to hardcode "sda19" for NABU
-    if ! $BIN_DIR/busybox sed -i 's/\$BOOTMODE && \[ -z "\$PREINITDEVICE" \] && PREINITDEVICE=\$(\.\/magisk --preinit-device)/PREINITDEVICE="sda19"/' "$MAGISK_DIR/assets/boot_patch.sh"; then
-        log "[ERROR] Failed to modify boot_patch.sh"
-        return 1
-    fi
-
-    "$MAGISK_DIR/assets/boot_patch.sh" "$TARGET_DIR/images/boot.img"
-
-    if [ -f "$MAGISK_DIR/assets/new-boot.img" ]; then
-        $BIN_DIR/busybox cp "$MAGISK_DIR/assets/new-boot.img" "$TARGET_DIR/images/magisk_boot.img"
-        log "[SUCCESS] Patching successful! Magisk boot image saved at: $TARGET_DIR/images/magisk_boot.img"
-    else
-        log "[ERROR] Patching unsuccessful. Please patch manually and add to /images folder..."
-        return 1
-    fi
-
-    return 0
-}
 
 # Call the function
 patch_magisk_boot
