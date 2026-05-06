@@ -43,10 +43,10 @@ on:
       root_type:
         description: 'Select root method present in ROM'
         required: true
-        default: 'KernelSu Next v3.1.0'
+        default: 'KernelSu Next v3.2.0'
         type: choice
         options:
-          - KernelSu Next v3.1.0
+          - KernelSu Next v3.2.0
           - KernelSu Next v1.1.1
           - KernelSu v1.0.5-80-legacy
           - KernelSu v1.0.1
@@ -145,13 +145,13 @@ jobs:
       - name: Map input strings to numbers for updating variables in conf
         run: |
           case "${{ github.event.inputs.root_type }}" in
-            "KernelSu Next v3.1.0") ROOT_TYPE=0; ROOT_LABEL="Kernel Su Next v3.1.0" ;;
+            "KernelSu Next v3.2.0") ROOT_TYPE=0; ROOT_LABEL="Kernel Su Next v3.2.0" ;;
             "KernelSu Next v1.1.1") ROOT_TYPE=1; ROOT_LABEL="Kernel Su Next v1.1.1" ;;
             "KernelSu v1.0.5-80-legacy") ROOT_TYPE=2; ROOT_LABEL="Kernel Su v1.0.5-80-legacy" ;;
             "KernelSu v1.0.1") ROOT_TYPE=3; ROOT_LABEL="Kernel Su v1.0.1" ;;
             "Sukisu-Ultra") ROOT_TYPE=4; ROOT_LABEL="Sukisu-Ultra" ;;
             "No Root") ROOT_TYPE=5; ROOT_LABEL="No Root" ;;
-            *) ROOT_TYPE=0; ROOT_LABEL="Kernel Su Next v3.1.0" ;;
+            *) ROOT_TYPE=0; ROOT_LABEL="Kernel Su Next v3.2.0" ;;
           esac
           echo "ROOT_TYPE=$ROOT_TYPE" >> $GITHUB_ENV
 

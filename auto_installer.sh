@@ -1178,7 +1178,7 @@ else
 	update_field "SECURITY_PATCH" "Security patch"
 	update_field "ROM_VERSION" "ROM Build version"
     echo -e "\nChoose root method present in ROM:\n"
-    echo -e "0) With root (KSU-N - Kernel SU NEXT v3.1.0)"
+    echo -e "0) With root (KSU-N - Kernel SU NEXT v3.2.0)"
     echo -e "1) With root (KSU-N - Kernel SU NEXT v1.1.1)"
     echo -e "2) With root (KSU - Kernel SU v1.0.5-80-legacy)"
     echo -e "3) With root (KSU - Kernel SU v1.0.1)"
@@ -1210,13 +1210,13 @@ fi
 $BIN_DIR/busybox sed -i "s/^VERIFY_SUPER=.*/VERIFY_SUPER=${VERIFY_SUPER:-0}  # set 1 to enable slow super.img extraction and hashing/" "$CONF_FILE"
 
 case "$ROOT_TYPE" in
-  0) root="Root with (KSU-N - Kernel SU NEXT v3.1.0)"
-    log "[INFO] Selected Kernel SU NEXT v3.1.0, Downloading APK..."
+  0) root="Root with (KSU-N - Kernel SU NEXT v3.2.0)"
+    log "[INFO] Selected Kernel SU NEXT v3.2.0, Downloading APK..."
     download_with_fallback \
-        "https://github.com/KernelSU-Next/KernelSU-Next/releases/download/v3.1.0/KernelSU_Next_v3.1.0-spoofed_33024-release.apk" \
-        "$BASE_URL/files/KernelSU_Next_v3.1.0.apk" \
-        "$TARGET_DIR/ROOT_APK_INSATLL_THIS_ONLY/KernelSU_Next_v3.1.0.apk" \
-        "KernelSU_Next_v3.1.0.apk"
+        "https://github.com/KernelSU-Next/KernelSU-Next/releases/download/v3.2.0/KernelSU_Next_v3.2.0-spoofed_33129-release.apk" \
+        "$BASE_URL/files/KernelSU_Next_v3.2.0.apk" \
+        "$TARGET_DIR/ROOT_APK_INSATLL_THIS_ONLY/KernelSU_Next_v3.2.0.apk" \
+        "KernelSU_Next_v3.2.0.apk"
     ;;
   1) root="Root with (KSU-N - Kernel SU NEXT v1.1.1)"
     log "[INFO] Selected Kernel SU NEXT v1.1.1, Downloading APK..."
@@ -1251,12 +1251,12 @@ case "$ROOT_TYPE" in
         "SukiSU_v3.1.6.apk"
     ;;
   5) root="Without root" ;;
-  *) root="Root with (KSU-N - Kernel SU NEXT v3.1.0)"
+  *) root="Root with (KSU-N - Kernel SU NEXT v3.2.0)"
     download_with_fallback \
-        "https://github.com/KernelSU-Next/KernelSU-Next/releases/download/v3.1.0/KernelSU_Next_v3.1.0-spoofed_33024-release.apk" \
-        "$BASE_URL/files/KernelSU_Next_v3.1.0.apk" \
-        "$TARGET_DIR/ROOT_APK_INSATLL_THIS_ONLY/KernelSU_Next_v3.1.0.apk" \
-        "KernelSU_Next_v3.1.0.apk"
+        "https://github.com/KernelSU-Next/KernelSU-Next/releases/download/v3.2.0/KernelSU_Next_v3.2.0-spoofed_33129-release.apk" \
+        "$BASE_URL/files/KernelSU_Next_v3.2.0.apk" \
+        "$TARGET_DIR/ROOT_APK_INSATLL_THIS_ONLY/KernelSU_Next_v3.2.0.apk" \
+        "KernelSU_Next_v3.2.0.apk"
     ;;
 esac
 
