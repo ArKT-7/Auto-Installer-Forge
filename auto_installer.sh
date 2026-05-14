@@ -682,20 +682,13 @@ $BIN_DIR/busybox mkdir -p "$TARGET_DIR"
 
 if [ "$ROM_TYPE" = "payload" ]; then
     echo " "
-    echo -e "Extracting payload.bin..."
-    $BIN_DIR/7zzs e "$SELECTED_ZIP_FILE" "payload.bin" -o"$TARGET_DIR" -y > /dev/null
-    [ ! -f "$TARGET_DIR/payload.bin" ] && { echo -e "[ERROR] payload.bin extraction failed."; exit 1; }
-    PAYLOAD_FILE="$TARGET_DIR/payload.bin"
-
-    echo -e "payload.bin extraction complete."
-    
-    log "[INFO] Extracting payload.bin..."
+    log "[INFO] Extracting images directly from OTA ZIP..."
     echo " "
     if [ -n "$1" ]; then
-        $BIN_DIR/otaripper -l "$PAYLOAD_FILE"
-        $BIN_DIR/otaripper -n -o "$TARGET_DIR" "$PAYLOAD_FILE" > /dev/null 2>&1 || { log "[ERROR] Extraction failed!"; exit 1; }
+        $BIN_DIR/otaripper -l "$SELECTED_ZIP_FILE"
+        $BIN_DIR/otaripper -n -o "$TARGET_DIR" "$SELECTED_ZIP_FILE" > /dev/null 2>&1 || { log "[ERROR] Extraction failed!"; exit 1; }
     else
-        $BIN_DIR/otaripper -n -o "$TARGET_DIR" "$PAYLOAD_FILE" || { log "[ERROR] Extraction failed!"; exit 1; }
+        $BIN_DIR/otaripper -n -o "$TARGET_DIR" "$SELECTED_ZIP_FILE" || { log "[ERROR] Extraction failed!"; exit 1; }
     fi
     mv "$TARGET_DIR"/extracted_*/* "$TARGET_DIR"/
     rm -rf "$TARGET_DIR"/extracted_*
@@ -877,12 +870,8 @@ log "[INFO] Truncating super.img..."
 $BIN_DIR/busybox truncate -s "$TOTAL_SIZE" "$TARGET_DIR/super.img"
 echo -e "[SUCCESS] Truncation complete."
 
-log "[INFO] Cleaning up payload.bin extracted img's..."
-if [ -n "$PAYLOAD_FILE" ]; then
-    rm_files=("${part_files[@]}" "$PAYLOAD_FILE")
-else
-    rm_files=("${part_files[@]}")
-fi
+log "[INFO] Cleaning up extracted img's..."
+rm_files=("${part_files[@]}")
 $BIN_DIR/busybox rm -f "${rm_files[@]}"
 echo -e "[SUCCESS] Cleanup complete."
 
