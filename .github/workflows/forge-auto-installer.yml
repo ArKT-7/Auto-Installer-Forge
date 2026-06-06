@@ -85,13 +85,23 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v6
 
+      - name: Fix pixeldrain URL
+        run: |
+          url="${{ github.event.inputs.rom_zip_url }}"
+          if echo "$url" | grep -qiE "pixeldrain\.[a-zA-Z]+"; then
+            host=$(echo "$url" | sed -E 's|https?://([^/]+)/.*|\1|')
+            fid=$(echo "$url" | sed -E 's|.*/([a-zA-Z0-9]+)(\?.*)?$|\1|')
+            url="https://$host/api/file/$fid?download"
+          fi
+          echo "FINAL_URL=$url" >> $GITHUB_ENV
+
       - name: Pre-check ROM zip content with PeekXtract
         id: PeekXtract_check
         run: |
           echo "Downloading PeekXtract..."
           curl -L -o PeekXtract https://github.com/ArKT-7/PeekXtract/releases/download/v2.0.4/PeekXtract
           chmod +x PeekXtract
-          URL="${{ github.event.inputs.rom_zip_url }}"
+          URL="$FINAL_URL"
           echo "Scanning Remote ZIP: $URL"
 
           set +e
@@ -116,7 +126,7 @@ jobs:
       - name: Download ROM zip with original filename
         id: download
         run: |
-          URL="${{ github.event.inputs.rom_zip_url }}"
+          URL="$FINAL_URL"
           mkdir -p input
           cd input
           echo "Downloading..."
