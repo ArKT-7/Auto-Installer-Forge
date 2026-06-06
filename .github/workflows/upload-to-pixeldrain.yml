@@ -9,7 +9,7 @@ on:
       pixeldrain_api_key:
         description: 'Pixeldrain API Key (Create account on pixeldrain to get one from API section)'
         required: true
-        type: string
+        type: password
 
 jobs:
   migrate:
