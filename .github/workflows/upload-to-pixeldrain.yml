@@ -9,7 +9,7 @@ on:
       pixeldrain_api_key:
         description: 'Pixeldrain API Key (Create account on pixeldrain to get one from API section)'
         required: true
-        type: password
+        type: string
 
 jobs:
   migrate:
@@ -24,7 +24,10 @@ jobs:
           python-version: '3.12'
 
       - name: Install Dependencies
-        run: pip install requests
+        run: |
+          SECRET_KEY=$(jq -r '.inputs.pixeldrain_api_key' "$GITHUB_EVENT_PATH")
+          echo "::add-mask::$SECRET_KEY"
+          pip install requests
 
       - name: Run Migration
         shell: python
