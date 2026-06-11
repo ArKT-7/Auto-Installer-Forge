@@ -133,7 +133,7 @@ extract_magisk_tools() {
     log "[INFO] Extracting Magisk tools..."
 
     # Unzip only assets and lib folders; if unzip fails, exit
-    if ! $BIN_DIR/7zzs x "$TARGET_DIR/ROOT_APK_INSATLL_THIS_ONLY/$1" "assets/*" "lib/*" -o"$MAGISK_DIR" -y > /dev/null; then
+    if ! $BIN_DIR/7zzs x "$TARGET_DIR/ROOT_APK_INSTALL_THIS_ONLY/$1" "assets/*" "lib/*" -o"$MAGISK_DIR" -y > /dev/null; then
         log "[ERROR] Failed to unzip Magisk APK"
         return 1
     fi
@@ -917,7 +917,7 @@ $BIN_DIR/busybox mkdir -p "$TARGET_DIR/META-INF/com/arkt"
 $BIN_DIR/busybox mkdir -p "$TARGET_DIR/bin/windows/platform-tools"
 $BIN_DIR/busybox mkdir -p "$TARGET_DIR/bin/windows/log-tool" 
 $BIN_DIR/busybox mkdir -p "$TARGET_DIR/bin/linux/platform-tools" 
-$BIN_DIR/busybox mkdir -p "$TARGET_DIR/ROOT_APK_INSATLL_THIS_ONLY"
+$BIN_DIR/busybox mkdir -p "$TARGET_DIR/ROOT_APK_INSTALL_THIS_ONLY"
 $BIN_DIR/busybox mv "$TARGET_DIR"/*.img "$TARGET_DIR/images/"
 
 #still gotta upload to mirror location for fallback
@@ -1081,16 +1081,10 @@ log "[SUCCESS] TEE for windows extracted."
 
 log "[INFO] Now will Download KernelSU NEXT and Magisk APK for ROOT access!\n"
 
-# download_with_fallback \
-#     "https://github.com/KernelSU-Next/KernelSU-Next/releases/download/v1.1.1/KernelSU_Next_v1.1.1_12851-release.apk" \
-#     "$BASE_URL/files/KernelSU_Next_v1.1.1.apk" \
-#     "$TARGET_DIR/ROOT_APK_INSATLL_THIS_ONLY/KernelSU_Next_v1.1.1.apk" \
-#     "KernelSU_Next_v1.1.1.apk"
-
 download_with_fallback \
     "https://github.com/topjohnwu/Magisk/releases/download/v30.7/Magisk-v30.7.apk" \
     "$BASE_URL/files/Magisk_v30.7.apk" \
-    "$TARGET_DIR/ROOT_APK_INSATLL_THIS_ONLY/Magisk_v30.7.apk" \
+    "$TARGET_DIR/ROOT_APK_INSTALL_THIS_ONLY/Magisk_v30.7.apk" \
     "Magisk-v30.7.apk"
 
 
@@ -1204,7 +1198,7 @@ case "$ROOT_TYPE" in
     download_with_fallback \
         "https://github.com/KernelSU-Next/KernelSU-Next/releases/download/v3.2.0/KernelSU_Next_v3.2.0-spoofed_33129-release.apk" \
         "$BASE_URL/files/KernelSU_Next_v3.2.0.apk" \
-        "$TARGET_DIR/ROOT_APK_INSATLL_THIS_ONLY/KernelSU_Next_v3.2.0.apk" \
+        "$TARGET_DIR/ROOT_APK_INSTALL_THIS_ONLY/KernelSU_Next_v3.2.0.apk" \
         "KernelSU_Next_v3.2.0.apk"
     ;;
   1) root="Root with (KSU-N - Kernel SU NEXT v1.1.1)"
@@ -1212,7 +1206,7 @@ case "$ROOT_TYPE" in
     download_with_fallback \
         "https://github.com/KernelSU-Next/KernelSU-Next/releases/download/v1.1.1/KernelSU_Next_v1.1.1_12851-release.apk" \
         "$BASE_URL/files/KernelSU_Next_v1.1.1.apk" \
-        "$TARGET_DIR/ROOT_APK_INSATLL_THIS_ONLY/KernelSU_Next_v1.1.1.apk" \
+        "$TARGET_DIR/ROOT_APK_INSTALL_THIS_ONLY/KernelSU_Next_v1.1.1.apk" \
         "KernelSU_Next_v1.1.1.apk"
     ;;
   2) root="Root with (KSU - Kernel SU v1.0.5-80-legacy)"
@@ -1220,7 +1214,7 @@ case "$ROOT_TYPE" in
     download_with_fallback \
         "https://github.com/rsuntk/KernelSU/releases/download/v1.0.5-80-legacy/KernelSU_v1.0.5-80-legacy_12328-release.apk" \
         "$BASE_URL/files/KernelSU_v1.0.5-80-legacy.apk" \
-        "$TARGET_DIR/ROOT_APK_INSATLL_THIS_ONLY/KernelSU_v1.0.5-80-legacy.apk" \
+        "$TARGET_DIR/ROOT_APK_INSTALL_THIS_ONLY/KernelSU_v1.0.5-80-legacy.apk" \
         "KernelSU_v1.0.5-80-legacy.apk"
     ;;
   3) root="Root with (KSU - Kernel SU v1.0.1)"
@@ -1228,7 +1222,7 @@ case "$ROOT_TYPE" in
     download_with_fallback \
         "https://github.com/tiann/KernelSU/releases/download/v1.0.1/KernelSU_v1.0.1_11928-release.apk" \
         "$BASE_URL/files/KernelSU_v1.0.1.apk" \
-        "$TARGET_DIR/ROOT_APK_INSATLL_THIS_ONLY/KernelSU_v1.0.1.apk" \
+        "$TARGET_DIR/ROOT_APK_INSTALL_THIS_ONLY/KernelSU_v1.0.1.apk" \
         "KernelSU_v1.0.1.apk"
     ;;
   4) root="Root with (SukiSU-Ultra)"
@@ -1236,7 +1230,7 @@ case "$ROOT_TYPE" in
     download_with_fallback \
         "https://github.com/SukiSU-Ultra/SukiSU-Ultra/releases/download/v3.1.6/SukiSU_v3.1.6_13165-release.apk" \
         "$BASE_URL/files/SukiSU_v3.1.6.apk" \
-        "$TARGET_DIR/ROOT_APK_INSATLL_THIS_ONLY/SukiSU_v3.1.6.apk" \
+        "$TARGET_DIR/ROOT_APK_INSTALL_THIS_ONLY/SukiSU_v3.1.6.apk" \
         "SukiSU_v3.1.6.apk"
     ;;
   5) root="Without root" ;;
@@ -1244,7 +1238,7 @@ case "$ROOT_TYPE" in
     download_with_fallback \
         "https://github.com/KernelSU-Next/KernelSU-Next/releases/download/v3.2.0/KernelSU_Next_v3.2.0-spoofed_33129-release.apk" \
         "$BASE_URL/files/KernelSU_Next_v3.2.0.apk" \
-        "$TARGET_DIR/ROOT_APK_INSATLL_THIS_ONLY/KernelSU_Next_v3.2.0.apk" \
+        "$TARGET_DIR/ROOT_APK_INSTALL_THIS_ONLY/KernelSU_Next_v3.2.0.apk" \
         "KernelSU_Next_v3.2.0.apk"
     ;;
 esac
