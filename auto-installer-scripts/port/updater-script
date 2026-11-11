@@ -55,24 +55,24 @@ aio_progress 0.5 0 # set progress to 50% instantly
 print_centered "Choose installation method:"
 flash_boot_menu
 flash_image "vendor_boot" "vendor_boot" 0.04 3
-flash_image "abl" "abl.img" 0.04 3
-flash_image "xbl" "xbl.img" 0.06 2
-flash_image "xbl_config" "xbl_config.img" 0.06 2
-flash_image "aop" "aop.img" 0.04 3
-flash_image "bluetooth" "bluetooth.img" 0.06 2
-flash_image "cmnlib" "cmnlib.img" 0.06 2
-flash_image "cmnlib64" "cmnlib64.img" 0.04 3
-flash_image "devcfg" "devcfg.img" 0.06 2
-flash_image "dsp" "dsp.img" 0.06 2
-flash_image "hyp" "hyp.img" 0.04 3
-flash_image "imagefv" "imagefv.img" 0.06 2
-flash_image "keymaster" "keymaster.img" 0.06 2
-flash_image "modem" "modem.img" 0.04 3
-flash_image "qupfw" "qupfw.img" 0.06 2
-flash_image "tz" "tz.img" 0.06 2
-flash_image "uefisecapp" "uefisecapp.img" 0.04 3
-flash_image "vbmeta" "vbmeta.img" 0.06 2
-flash_image "vbmeta_system" "vbmeta_system.img" 0.06 2
+flash_image "abl" "abl" 0.04 3
+flash_image "xbl" "xbl" 0.06 2
+flash_image "xbl_config" "xbl_config" 0.06 2
+flash_image "aop" "aop" 0.04 3
+flash_image "bluetooth" "bluetooth" 0.06 2
+flash_image "cmnlib" "cmnlib" 0.06 2
+flash_image "cmnlib64" "cmnlib64" 0.04 3
+flash_image "devcfg" "devcfg" 0.06 2
+flash_image "dsp" "dsp" 0.06 2
+flash_image "hyp" "hyp" 0.04 3
+flash_image "imagefv" "imagefv" 0.06 2
+flash_image "keymaster" "keymaster" 0.06 2
+flash_image "modem" "modem" 0.04 3
+flash_image "qupfw" "qupfw" 0.06 2
+flash_image "tz" "tz" 0.06 2
+flash_image "uefisecapp" "uefisecapp" 0.04 3
+flash_image "vbmeta" "vbmeta" 0.06 2
+flash_image "vbmeta_system" "vbmeta_system" 0.06 2
 aio_progress 0.99 200 
 ui_print "    Flashing super image.."
 package_extract_image "images/super.img" "/dev/block/platform/soc/1d84000.ufshc/by-name/super"
