@@ -19,9 +19,10 @@ on:
       android_ver:
         description: 'Android version'
         required: true
-        default: '16'
+        default: '17'
         type: choice
         options:
+          - 17
           - 16
           - 15
           - 14
